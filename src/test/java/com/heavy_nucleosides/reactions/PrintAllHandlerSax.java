@@ -4,6 +4,7 @@ import com.heavy_nucleosides.model.Reaction;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -51,25 +52,34 @@ public class PrintAllHandlerSax extends DefaultHandler {
     private static final String ACTION = "action";
 
     private StringBuilder currentValue = new StringBuilder();
+    private Attributes currentAttributes;
 
+    private OrientDB orient = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
+    private ODatabaseSession db;
+    private ODocument reaction;
+    private ODocument source;
+    private ODocument productList;
+    private ODocument product;
+    private ODocument molecule;
+    private ODocument reactantList;
+    private ODocument reactant;
+    private ODocument amount;
+    private ODocument spectatorList;
+    private ODocument spectator;
+    private ODocument reactionActionList;
+    private ODocument reactionAction;
+    private ODocument chemical;
 
-    static OrientDB orient = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
-    static ODatabaseSession db;
-    static ODocument reaction;
-    static ODocument source;
-    static ODocument productList;
-    static ODocument product;
-    static ODocument molecule;
-    static ODocument reactantList;
-    static ODocument reactant;
-    static ODocument amount;
-    static ODocument spectatorList;
-    static ODocument spectator;
-    static ODocument reactionActionList;
-    static ODocument reactionAction;
-    static ODocument chemical;
+    private String objName="";
+    private String qNameStr="";
+    private String cmlStr="";
 
-    static String objName="";
+    private Attributes moleculeAttributes;
+    private Attributes identifierAttributes;
+    private Attributes reactantAttributes;
+    private Attributes amountAttributes;
+    private Attributes spectatorAttributes;
+    private Attributes reactionActionAttributes;
 
     @Override
     public void startDocument() {
@@ -79,9 +89,36 @@ public class PrintAllHandlerSax extends DefaultHandler {
 
     @Override
     public void endDocument() {
-        db.save(reaction);
+        long reactionCnt = db.getClass(REACTION).count();
+        long sourceCnt = db.getClass(SOURCE).count();
+        long productListCnt = db.getClass(PRODUCT_LIST).count();
+        long productCnt = db.getClass(PRODUCT).count();
+        long moleculeCnt = db.getClass(MOLECULE).count();
+        long reactantListCnt = db.getClass(REACTANT_LIST).count();
+        long reactantCnt = db.getClass(REACTANT).count();
+        long amountCnt = db.getClass(AMOUNT).count();
+        long spectatorListCnt = db.getClass(SPECTATOR_LIST).count();
+        long spectatorCnt = db.getClass(SPECTATOR).count();
+        long reactionActionListCnt = db.getClass(REACTION_ACTION_LIST).count();
+        long reactionActionCnt = db.getClass(REACTION_ACTION).count();
+        long chemicalCnt = db.getClass(CHEMICAL).count();
+
         db.close();
-        System.out.println("db close");
+
+        System.out.println("-------------- STATISTIC -------------");
+        System.out.format("%s:      %d%n",REACTION, reactionCnt);
+        System.out.format("%s:      %d%n",SOURCE, sourceCnt);
+        System.out.format("%s:      %d%n",PRODUCT_LIST, productListCnt);
+        System.out.format("%s:      %d%n",PRODUCT, productCnt);
+        System.out.format("%s:      %d%n",MOLECULE, moleculeCnt);
+        System.out.format("%s:      %d%n",REACTANT_LIST, reactantListCnt);
+        System.out.format("%s:      %d%n",REACTANT, reactantCnt);
+        System.out.format("%s:      %d%n",AMOUNT, amountCnt);
+        System.out.format("%s:      %d%n",SPECTATOR_LIST, spectatorListCnt);
+        System.out.format("%s:      %d%n",SPECTATOR, spectatorCnt);
+        System.out.format("%s:      %d%n",REACTION_ACTION_LIST, reactionActionListCnt);
+        System.out.format("%s:      %d%n",REACTION_ACTION, reactionActionCnt);
+        System.out.format("%s:      %d%n",CHEMICAL, chemicalCnt);
     }
 
     @Override
@@ -96,7 +133,7 @@ public class PrintAllHandlerSax extends DefaultHandler {
 
         qName = qName.replace("dl:","");
         System.out.printf("Start Element : qName=%s%n",qName);
-
+        currentAttributes = attributes;
 
         switch(qName) {
             case REACTION:
@@ -107,12 +144,65 @@ public class PrintAllHandlerSax extends DefaultHandler {
                 reactantList = new ODocument(REACTANT_LIST);
                 spectatorList = new ODocument(SPECTATOR_LIST);
                 reactionActionList = new ODocument(REACTION_ACTION_LIST);
+                break;
+            case SOURCE:
+                objName = SOURCE;
+                break;
+            case PRODUCT:
+                product = new ODocument(PRODUCT);
+                objName = PRODUCT;
+                break;
+            case MOLECULE:
+                molecule = new ODocument(MOLECULE);
+                moleculeAttributes = attributes;
+                break;
+            case IDENTIFIER:
+                identifierAttributes = attributes;
+                break;
+            case REACTANT:
+                objName = REACTANT;
+                reactantAttributes = attributes;
+                reactant = new ODocument(REACTANT);
+                break;
+            case AMOUNT:
+                amountAttributes = attributes;
+                amount = new ODocument(AMOUNT);
+                break;
+            case SPECTATOR:
+                objName = SPECTATOR;
+                spectatorAttributes = attributes;
+                spectator = new ODocument(SPECTATOR);
+                break;
+            case REACTION_ACTION:
+                objName = REACTION_ACTION;
+                reactionActionAttributes = attributes;
+                reactionAction = new ODocument(REACTION_ACTION);
+                break;
+            case CHEMICAL:
+                objName = CHEMICAL;
+                chemical = new ODocument(CHEMICAL);
+                break;
+        }
+    }
 
+    @Override
+    public void endElement(String uri,
+                           String localName,
+                           String qName) {
+
+        qName = qName.replace("dl:","");
+        System.out.printf("Start Element : qName=%s%n",qName);
+
+
+        switch(qName) {
+            case REACTION:
                 reaction.field(SOURCE, source);
                 reaction.field(PRODUCT_LIST, productList);
                 reaction.field(REACTANT_LIST, reactantList);
                 reaction.field(SPECTATOR_LIST, spectatorList);
                 reaction.field(REACTION_ACTION_LIST, reactionActionList);
+                db.save(reaction);
+                System.out.println("reaction appended");
                 break;
             case SOURCE:
                 objName = SOURCE;
@@ -139,13 +229,16 @@ public class PrintAllHandlerSax extends DefaultHandler {
                 reaction.field(REACTION_SMILES,currentValue.toString());
                 break;
             case PRODUCT:
-                objName = PRODUCT;
-                product = new ODocument(PRODUCT);
                 productList.field(PRODUCT, product);
                 break;
             case MOLECULE:
-                molecule = new ODocument(MOLECULE);
-                molecule.field(ID, attributes.getValue(ID));
+                for (int index = 0; index < moleculeAttributes.getLength(); index++) {
+                    qNameStr = moleculeAttributes.getLocalName(index);
+                    if(qNameStr.equals(ID)) {
+                        molecule.field(ID, moleculeAttributes.getValue(ID));
+                    }
+                }
+
                 if (objName.equals(PRODUCT)){
                     product.field(MOLECULE, molecule);
                     break;
@@ -158,37 +251,75 @@ public class PrintAllHandlerSax extends DefaultHandler {
                     spectator.field(MOLECULE, molecule);
                     break;
                 }
+                if (objName.equals(CHEMICAL)){
+                    chemical.field(MOLECULE, molecule);
+                    break;
+                }
             case NAME:
                 molecule.field(NAME, currentValue.toString());
                 break;
             case IDENTIFIER:
                 if (objName.equals(PRODUCT)){
-                    if (attributes.getValue(0).equals(CML_SMILES)){
-                        product.field(SMILES, currentValue.toString());
-                    } else {
-                        product.field(INCHI, currentValue.toString());
+                    for (int index = 0; index < identifierAttributes.getLength(); index++) {
+                        qNameStr = identifierAttributes.getLocalName(index);
+                        if (qNameStr.equals(CML_SMILES) ){
+                            product.field(SMILES, currentValue.toString());
+                        }
+                        if (qNameStr.equals(CML_INCHI) ){
+                            product.field(INCHI, currentValue.toString());
+                        }
                     }
                     break;
                 }
                 if (objName.equals(SPECTATOR)){
-                    if (attributes.getValue(0).equals(CML_SMILES)){
-                        spectator.field(SMILES, currentValue.toString());
-                    } else {
-                        spectator.field(INCHI, currentValue.toString());
+                    for (int index = 0; index < identifierAttributes.getLength(); index++) {
+                        qNameStr = identifierAttributes.getLocalName(index);
+                        if (qNameStr.equals(CML_SMILES) ){
+                            spectator.field(SMILES, currentValue.toString());
+                        }
+                        if (qNameStr.equals(CML_INCHI) ){
+                            spectator.field(INCHI, currentValue.toString());
+                        }
+                    }
+                    break;
+                }
+                if (objName.equals(REACTION_ACTION)){
+                    for (int index = 0; index < identifierAttributes.getLength(); index++) {
+                        qNameStr = identifierAttributes.getLocalName(index);
+                        if (qNameStr.equals(CML_SMILES) ){
+                            reactionAction.field(SMILES, currentValue.toString());
+                        }
+                        if (qNameStr.equals(CML_INCHI) ){
+                            reactionAction.field(INCHI, currentValue.toString());
+                        }
                     }
                     break;
                 }
             case REACTANT:
-                objName = REACTANT;
-                reactant = new ODocument(REACTANT);
-                reactant.field(ROLE, attributes.getValue(ROLE));
-                reactant.field(COUNT, attributes.getValue(COUNT));
+                for (int index = 0; index < reactantAttributes.getLength(); index++) {
+                    qNameStr = reactantAttributes.getLocalName(index);
+                    if(qNameStr.equals(ROLE)) {
+                        reactant.field(ROLE, reactantAttributes.getValue(index));
+                    }
+                    if(qNameStr.equals(COUNT)) {
+                        reactant.field(COUNT, reactantAttributes.getValue(index));
+                    }
+                }
                 reactantList.field(REACTANT, reactant);
                 break;
             case AMOUNT:
-                amount = new ODocument(AMOUNT);
-                amount.field(PROPERTY_TYPE, attributes.getValue(PROPERTY_TYPE));
-                amount.field(NORMALIZED_VALUE, attributes.getValue(NORMALIZED_VALUE));
+                for (int index = 0; index < amountAttributes.getLength(); index++) {
+                    qNameStr = amountAttributes.getLocalName(index).replace("dl:","");
+                    if (qNameStr.equals(PROPERTY_TYPE)){
+                        amount.field(PROPERTY_TYPE, amountAttributes.getValue(index));
+                    }
+                    if (qNameStr.equals(NORMALIZED_VALUE)){
+                        amount.field(NORMALIZED_VALUE, amountAttributes.getValue(index));
+                    }
+//
+//                    System.out.print(amountAttributes.getLocalName(index) + " => "
+//                            + amountAttributes.getValue(index));
+                }
                 amount.field(VALUE, currentValue.toString());
                 if (objName.equals(REACTANT)){
                     reactant.field(AMOUNT, amount);
@@ -209,64 +340,29 @@ public class PrintAllHandlerSax extends DefaultHandler {
                 }
                 break;
             case SPECTATOR:
-                objName = SPECTATOR;
-                spectator = new ODocument(SPECTATOR);
-                spectator.field(ROLE, attributes.getValue(ROLE));
+                for (int index = 0; index < spectatorAttributes.getLength(); index++) {
+                    qNameStr = spectatorAttributes.getLocalName(index);
+                    if (qNameStr.equals(ROLE)){
+                        spectator.field(ROLE, spectatorAttributes.getValue(index));
+                    }
+                }
                 spectatorList.field(SPECTATOR, spectator);
                 break;
             case REACTION_ACTION:
-                objName = REACTION_ACTION;
-                reactionAction = new ODocument(REACTION_ACTION);
-                reactionAction.field(ACTION, attributes.getValue(ROLE));
+                for (int index = 0; index < spectatorAttributes.getLength(); index++) {
+                    qNameStr = spectatorAttributes.getLocalName(index);
+                    if (qNameStr.equals(ACTION)){
+                        reactionAction.field(ACTION, reactionActionAttributes.getValue(index));
+                    }
+                }
                 reactionActionList.field(REACTION_ACTION, reactionAction);
                 break;
             case PHRASE_TEXT:
                 reactionAction.field(PHRASE_TEXT, currentValue.toString());
                 break;
             case CHEMICAL:
+                reactionActionList.field(CHEMICAL, chemical);
                 break;
-        }
-//        if (objName.equals(qName)) {
-//
-//        } else {
-//
-//        }
-//
-//        if (qName.equalsIgnoreCase("staff")) {
-//            // get tag's attribute by name
-//            String id = attributes.getValue("id");
-//            System.out.printf("Staff id : %s%n", id);
-//        }
-//
-//        if (qName.equalsIgnoreCase("salary")) {
-//            // get tag's attribute by index, 0 = first attribute
-//            String currency = attributes.getValue(0);
-//            System.out.printf("Currency :%s%n", currency);
-//        }
-
-    }
-
-    @Override
-    public void endElement(String uri,
-                           String localName,
-                           String qName) {
-
-        System.out.printf("End Element : %s%n", qName);
-
-        if (qName.equalsIgnoreCase("name")) {
-            System.out.printf("Name : %s%n", currentValue.toString());
-        }
-
-        if (qName.equalsIgnoreCase("role")) {
-            System.out.printf("Role : %s%n", currentValue.toString());
-        }
-
-        if (qName.equalsIgnoreCase("salary")) {
-            System.out.printf("Salary : %s%n", currentValue.toString());
-        }
-
-        if (qName.equalsIgnoreCase("bio")) {
-            System.out.printf("Bio : %s%n", currentValue.toString());
         }
 
     }

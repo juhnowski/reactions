@@ -5,17 +5,20 @@ import java.util.List;
 public record Spectator(String role,
                         Molecule molecule,
                         List<Amount> amounts,
-                        List<Identifier> identifiers,
+                        String smiles,
+                        String inchi,
                         String entityType) {
     public Spectator(String role,
                       Molecule molecule,
                       List<Amount> amounts,
-                      List<Identifier> identifiers,
+                     String smiles,
+                     String inchi,
                       String entityType) {
         this.role = role;
         this.molecule = molecule;
         this.amounts = amounts;
-        this.identifiers = identifiers;
+        this.smiles = smiles;
+        this.inchi = inchi;
         this.entityType = entityType;
     }
     public static final String name = "spectator";

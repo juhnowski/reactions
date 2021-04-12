@@ -3,13 +3,16 @@ package com.heavy_nucleosides.model;
 import java.util.List;
 
 public record Chemical(Molecule molecule,
-                       List<Identifier> identifiers,
+                       String smiles,
+                       String inchi,
                        String entityType) {
     public Chemical(Molecule molecule,
-                    List<Identifier> identifiers,
+                    String smiles,
+                    String inchi,
                     String entityType) {
         this.molecule = molecule;
-        this.identifiers = identifiers;
+        this.smiles = smiles;
+        this.inchi = inchi;
         this.entityType = entityType;
     }
 }
