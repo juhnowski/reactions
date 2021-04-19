@@ -1,4 +1,4 @@
-package com.heavy_nucleosides.model;
+package com.heavy_nucleosides.dto;
 
 import java.util.HashMap;
 import java.util.List;

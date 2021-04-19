@@ -1,4 +1,4 @@
-package com.heavy_nucleosides.model;
+package com.heavy_nucleosides.dto;
 
 public record Parameter(String propertyType,
                         String normalizedValue,

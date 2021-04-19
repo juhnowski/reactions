@@ -1,6 +1,5 @@
 package com.heavy_nucleosides.reactions;
 
-import com.heavy_nucleosides.model.Reaction;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
