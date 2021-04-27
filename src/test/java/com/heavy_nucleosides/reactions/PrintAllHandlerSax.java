@@ -24,10 +24,6 @@ public class PrintAllHandlerSax extends DefaultHandler {
     private static final String MOLECULE = "molecule";
     private static final String NAME = "name";
     private static final String IDENTIFIER = "identifier";
-    private static final String CML_SMILES = "cml:smiles";
-    private static final String SMILES = "smiles";
-    private static final String CML_INCHI = "cml:inchi";
-    private static final String INCHI = "inchi";
     private static final String ID = "id";
 
     private static final String REACTANT_LIST = "reactantList";
@@ -51,6 +47,8 @@ public class PrintAllHandlerSax extends DefaultHandler {
     private static final String ACTION = "action";
 
     private StringBuilder currentValue = new StringBuilder();
+    private String dictRef="";
+
     private Attributes currentAttributes;
 
     private OrientDB orient = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
@@ -82,7 +80,7 @@ public class PrintAllHandlerSax extends DefaultHandler {
 
     @Override
     public void startDocument() {
-        db = orient.open("reactions", "root", "1");
+        db = orient.open("reactions", "root", "root");
         System.out.println("db open");
     }
 
@@ -103,7 +101,7 @@ public class PrintAllHandlerSax extends DefaultHandler {
         long chemicalCnt = db.getClass(CHEMICAL).count();
 
         db.close();
-
+/*
         System.out.println("-------------- STATISTIC -------------");
         System.out.format("%s:      %d%n",REACTION, reactionCnt);
         System.out.format("%s:      %d%n",SOURCE, sourceCnt);
@@ -118,6 +116,8 @@ public class PrintAllHandlerSax extends DefaultHandler {
         System.out.format("%s:      %d%n",REACTION_ACTION_LIST, reactionActionListCnt);
         System.out.format("%s:      %d%n",REACTION_ACTION, reactionActionCnt);
         System.out.format("%s:      %d%n",CHEMICAL, chemicalCnt);
+
+ */
     }
 
     @Override
@@ -131,7 +131,7 @@ public class PrintAllHandlerSax extends DefaultHandler {
         currentValue.setLength(0);
 
         qName = qName.replace("dl:","");
-        System.out.printf("Start Element : qName=%s%n",qName);
+        //System.out.printf("Start Element : qName=%s%n",qName);
         currentAttributes = attributes;
 
         switch(qName) {
@@ -190,7 +190,7 @@ public class PrintAllHandlerSax extends DefaultHandler {
                            String qName) {
 
         qName = qName.replace("dl:","");
-        System.out.printf("Start Element : qName=%s%n",qName);
+       // System.out.printf("Start Element : qName=%s%n",qName);
 
 
         switch(qName) {
@@ -201,7 +201,7 @@ public class PrintAllHandlerSax extends DefaultHandler {
                 reaction.field(SPECTATOR_LIST, spectatorList);
                 reaction.field(REACTION_ACTION_LIST, reactionActionList);
                 db.save(reaction);
-                System.out.println("reaction appended");
+                //System.out.println("reaction appended");
                 break;
             case SOURCE:
                 objName = SOURCE;
@@ -259,13 +259,14 @@ public class PrintAllHandlerSax extends DefaultHandler {
                 break;
             case IDENTIFIER:
                 if (objName.equals(PRODUCT)){
+
                     for (int index = 0; index < identifierAttributes.getLength(); index++) {
                         qNameStr = identifierAttributes.getLocalName(index);
-                        if (qNameStr.equals(CML_SMILES) ){
-                            product.field(SMILES, currentValue.toString());
-                        }
-                        if (qNameStr.equals(CML_INCHI) ){
-                            product.field(INCHI, currentValue.toString());
+
+                        if (qNameStr.equals(VALUE) ){
+                            product.field(dictRef, identifierAttributes.getValue(index));
+                        } else {
+                            dictRef=identifierAttributes.getValue(index).replace("cml:","");;
                         }
                     }
                     break;
@@ -273,23 +274,22 @@ public class PrintAllHandlerSax extends DefaultHandler {
                 if (objName.equals(SPECTATOR)){
                     for (int index = 0; index < identifierAttributes.getLength(); index++) {
                         qNameStr = identifierAttributes.getLocalName(index);
-                        if (qNameStr.equals(CML_SMILES) ){
-                            spectator.field(SMILES, currentValue.toString());
-                        }
-                        if (qNameStr.equals(CML_INCHI) ){
-                            spectator.field(INCHI, currentValue.toString());
+                        if (qNameStr.equals(VALUE) ){
+                            spectator.field(dictRef, identifierAttributes.getValue(index));
+                        } else {
+                            dictRef=identifierAttributes.getValue(index).replace("cml:","");;
                         }
                     }
                     break;
                 }
-                if (objName.equals(REACTION_ACTION)){
+                if (objName.equals(CHEMICAL)){
                     for (int index = 0; index < identifierAttributes.getLength(); index++) {
                         qNameStr = identifierAttributes.getLocalName(index);
-                        if (qNameStr.equals(CML_SMILES) ){
-                            reactionAction.field(SMILES, currentValue.toString());
-                        }
-                        if (qNameStr.equals(CML_INCHI) ){
-                            reactionAction.field(INCHI, currentValue.toString());
+
+                        if (qNameStr.equals(VALUE) ){
+                            chemical.field(dictRef, identifierAttributes.getValue(index));
+                        } else {
+                            dictRef=identifierAttributes.getValue(index).replace("cml:","");;
                         }
                     }
                     break;
