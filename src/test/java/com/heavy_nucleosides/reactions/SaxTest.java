@@ -33,15 +33,17 @@ public class SaxTest {
 
                 int total = files.size();
                 for (int i=0; i < total; i++) {
-                    System.out.println(i + "/" + total);
-                    File fn = files.get(i);
 
+                    File fn = files.get(i);
+                    System.out.println(i + "/" + total + " fn="+ fn + "("+fn.length()+")");
                     try {
                         saxParser.parse(fn, handler);
                     } catch (Exception ex){
                         System.out.println(fn+"=>"+ex.getMessage());
                         err.put(fn.toString(),ex.getMessage());
                     }
+
+                    System.gc();
                 }
 
 

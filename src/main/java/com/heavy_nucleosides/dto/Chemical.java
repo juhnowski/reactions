@@ -1,7 +1,10 @@
 package com.heavy_nucleosides.dto;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+
 import java.util.List;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public record Chemical(Molecule molecule,
                        String smiles,
                        String inchi,
